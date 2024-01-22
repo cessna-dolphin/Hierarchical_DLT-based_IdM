@@ -1,0 +1,46 @@
+blockchain:
+  #挖矿难度值
+  Diff: 5
+  # 难度基准值
+  Base: 1
+  #挖矿奖励
+  MinerReward: 5
+  #每个块包含的交易个数
+  TX_Pool: 40
+  #挖矿模式：0:pow 1:por 2：PoS
+  Con_Mode: 0
+  #日志存放路径
+  log_path: "./data"
+  #快速启动节点个数
+  QuickStart_Num: 15
+network:
+  #本地IP
+  listen_host: "127.0.0.22"
+  #主机端口
+  listen_port: "9007"
+
+PBFT_Simulation:
+  #通信方式
+  Communication_Method: "CTN"
+  #区块链节点数量(不包含客户端节点）
+  Node_Number: 20
+  #节点平均距离(km)
+  Node_Avg_Distance: 2000
+  #节点平均跳数
+  Node_Avg_Routing_Hop: 7
+  #卫星轨道倾角(°)
+  Orbit_Inclination: 89.7
+  #卫星轨道高度(km)
+  Orbit_Height: 1200
+  #地面网关分布情形
+  Gateway_Scenario: "SNear"
+  #交易的到达率
+  Lambda_P: 500
+  #客户端端口
+  ClientPort: "6701"
+
+Hierarchical_IdM:
+  #SP节点数
+  SPNum: 5
+  #UE节点数
+  UENum: 10
