@@ -38,6 +38,8 @@ type PBFT struct {
 	//锁
 	lock sync.Mutex
 
+	//当前侧链区块中交易数量，用于确定动态密钥位于侧脸中的具体位置
+	DynaKeyPos map[int]int
 	//ID交易缓存，用于模拟ID交易的生成
 	IDtxPool chan *Utils.Tx
 	//动态密钥交易缓存，用于模拟动态密钥交易的生成
@@ -83,9 +85,9 @@ type PBFT struct {
 	pubkeys map[string][]byte
 }
 
-var TxRx int
-var isPrimaryNode bool
-var TxInBlock int //测试用，暂存一个区块中交易的数量
+//var TxRx int
+//var isPrimaryNode bool
+//var TxInBlock int //测试用，暂存一个区块中交易的数量
 
 // 以nodeID和节点监听地址构造PBFT
 func NewIdM(nodeID, addr string) *PBFT {
@@ -99,6 +101,7 @@ func NewIdM(nodeID, addr string) *PBFT {
 	p.MainSequenceID = 0
 	p.SideSequenceID = 0
 
+	p.DynaKeyPos = make(map[int]int)
 	p.leaderIDTxSetChan = make(chan *Utils.TxSet, 500)
 	p.IDtxPool = make(chan *Utils.Tx, 50)
 	p.leaderDynaKeyTxSetChan = make(chan *Utils.TxSet, 500)
@@ -196,7 +199,7 @@ func (p *PBFT) sendTxTrans() {
 			bc := new(Blockchain.BlockChain)
 			bc = Blockchain.MainBlockchainObject(Constant.ListenPort)
 			block := Utils.NewBlock(Constant.CurMainHeight+1, bc.Tip, Utils.TxsPointer2Array(p.leaderIDTxPool[:txsInBlock]))
-			TxInBlock = len(p.leaderIDTxPool[:txsInBlock])
+			//TxInBlock = len(p.leaderIDTxPool[:txsInBlock])
 			r := new(Utils.Request)
 			r.Timestamp = time.Now().UnixNano()
 			r.ClientAddr = "1007"
@@ -246,7 +249,7 @@ func (p *PBFT) sendTxTrans() {
 			bc := new(Blockchain.BlockChain)
 			bc = Blockchain.SideBlockchainObject(Constant.ListenPort)
 			block := Utils.NewBlock(Constant.CurSideHeight+1, bc.Tip, Utils.TxsPointer2Array(p.leaderDynaKeyTxPool[:txsInBlock]))
-			TxInBlock = len(p.leaderDynaKeyTxPool[:txsInBlock])
+			//TxInBlock = len(p.leaderDynaKeyTxPool[:txsInBlock])
 			r := new(Utils.Request)
 			r.Timestamp = time.Now().UnixNano()
 			r.ClientAddr = "1007"

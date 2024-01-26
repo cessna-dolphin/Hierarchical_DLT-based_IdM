@@ -271,7 +271,11 @@ func GetBlockByHeight(nodeID string, height int) *Utils.Block {
 }
 
 // 根据已有的主链交易，随机选取一对ID并基于其生成动态密钥
-func NewDynaKeyFromExistID() string {
+func NewDynaKeyFromExistID(pos map[int]int) string {
+	if Constant.CurMainHeight <= 1 { //仍在创世块前
+		return "Dynamic key existed"
+	}
+
 	b1, b2 := rand.Intn(int(Constant.CurMainHeight-1))+2, rand.Intn(int(Constant.CurMainHeight-1))+2 //随机选取的两个主链区块高度，+2原因是不能获取到创世块
 	log.Info("Get random main chain heights:", b1, b2)
 	var mBlock1, mBlock2 *Utils.Block
@@ -295,22 +299,25 @@ func NewDynaKeyFromExistID() string {
 
 	//更改所选择的两个ID交易的映射关系
 	//TODO 如何确定当前的Dynamic Key将会作为第几侧链区块的第几交易提交？
-	randomID1.Mapping, randomID2.Mapping = map[int]int{int(Constant.CurSideHeight + 1): 0}, map[int]int{int(Constant.CurSideHeight + 1): 0}
-	selectedID1, selectedID2 := make(map[int]int), make(map[int]int)
-	selectedID1[b1], selectedID2[b2] = num1, num2
+
+	randomID1.Mapping, randomID2.Mapping = pos, pos //将规定的交易位置标志位存入两个选定的ID的映射位
 	return DynamicKey
 }
 
 // 生成随机动态密钥
-func NewDynaKeyTX() *Utils.Tx {
+func NewDynaKeyTX(pos map[int]int) *Utils.Tx {
 	data := Utils.Data{
 		Category: "DynaKey",
-		Content:  NewDynaKeyFromExistID(),
+		Content:  NewDynaKeyFromExistID(pos),
 	}
+	fixedPos := pos[int(Constant.CurSideHeight+1)]
+	dynaMapping := make(map[int]int)
+	dynaMapping[1] = fixedPos
 	tx := Utils.Tx{
 		Hash:      nil,
 		TimeStamp: time.Now().Unix(),
 		Data:      data,
+		Mapping:   dynaMapping, //将事先规定的交易标志位作为严格限定动态密钥交易的排序参数
 	}
 	tx.HashTransaction()
 	return &tx

@@ -150,15 +150,29 @@ func GenesisSideInit() []Tx {
 	return Txs
 }
 
-// 交易的排序
+// 交易的排序，需要针对ID交易和动态密钥交易的特征进行
 func SortTxs(txs []*Tx) {
-	sort.Slice(txs, func(i, j int) bool {
-		if txs[i].TimeStamp == txs[j].TimeStamp {
-			return txs[i].Data.Content < txs[j].Data.Content
-		} else {
-			return txs[i].TimeStamp < txs[j].TimeStamp
-		}
-	})
+	if len(txs) == 0 { //空交易切片，直接返回
+		return
+	}
+	//ID交易的特点：时间戳有序，ID编号也可进行排序
+	if txs[0].Data.Category == "ID" {
+		sort.Slice(txs, func(i, j int) bool {
+			if txs[i].TimeStamp == txs[j].TimeStamp {
+				return txs[i].Data.Content < txs[j].Data.Content
+			} else {
+				return txs[i].TimeStamp < txs[j].TimeStamp
+			}
+		})
+	}
+	//动态密钥交易特点：时间戳有序，动态密钥本身也可进行排序，但需要在交易打包进区块前就知道该密钥将会作为第几个
+	//由于动态密钥不需要继续向下映射，故考虑在生成动态密钥时，对Mapping赋值，此时按照Mapping的Value值进行排序即可
+	//交易排序发生在curSideHeight增长之前，因此考虑对curSideHeight + 1的key值排序
+	if txs[0].Data.Category == "DynaKey" {
+		sort.Slice(txs, func(i, j int) bool {
+			return txs[i].Mapping[1] < txs[j].Mapping[1]
+		})
+	}
 }
 
 // 将交易指针数组转换为普通数组

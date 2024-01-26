@@ -57,6 +57,7 @@ func Server() {
 		//复制创世块
 		Utils.CopyGenesisBlock(nodeID)
 		if nodeID == "1008" {
+			p.DynaKeyPos[1] = 0
 			go p.sendTxTrans() //由于目前只有主节点（1008）能够打包区块，因此直接用txTransfer即可实现
 			go p.txListen(0)
 			go p.txTransfer()

@@ -26,11 +26,19 @@ func (p *PBFT) txListen(ChangeIndex int64) {
 			p.IDtxPool <- Utils.NewRandomIDTX()
 		}
 		if Constant.CurMainHeight%2 == 0 { //每生成2块ID块，生成10个动态公钥
+			p.DynaKeyPos[int(Constant.CurSideHeight+1)] = 0 //初始化下一块侧链区块的交易标志位
 			for i := 0; i < 10; i++ {
-				p.DynaKeytxPool <- Blockchain.NewDynaKeyTX()
+				DynaKey := Blockchain.NewDynaKeyTX(p.DynaKeyPos)
+				if DynaKey.Data.Content == "Dynamic key existed" {
+					i-- //当前动态公钥已存在，重新生成
+				} else {
+					p.DynaKeytxPool <- DynaKey                    //合法的动态公钥才存入交易池
+					p.DynaKeyPos[int(Constant.CurSideHeight+1)]++ //交易池中已有合法动态公钥，则交易标志位自增
+				}
+
 			}
 		}
-		TxRx = len(p.IDtxPool)
+		//TxRx = len(p.IDtxPool)
 		//TransStart := NodeState{sTrans, time.Now().UnixNano(),TxRx, isPrimaryNode}
 		//p.StatePool <- TransStart
 		time.Sleep(100 * time.Millisecond) //控制交易生成时间
