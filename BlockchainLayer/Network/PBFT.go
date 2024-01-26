@@ -178,17 +178,17 @@ func (p *PBFT) sendTxTrans() {
 	defer p.lock.Unlock()
 	for {
 		if len(p.leaderIDTxPool) <= txsInBlock {
-			log.Info("Available spaces in primary node ID transaction pool, receiving new ID transactions from ID transaction set.")
+			//log.Info("Available spaces in primary node ID transaction pool, receiving new ID transactions from ID transaction set.")
 			// 当ID交易池中，交易数量未达到阈值，则从ID交易管道接收新交易
 			select {
 			case txMainSet := <-p.leaderIDTxSetChan:
-				log.Info("Primary node ID transaction set valid.")
+				//log.Info("Primary node ID transaction set valid.")
 				for i, _ := range txMainSet.TxS {
 					p.leaderIDTxPool = append(p.leaderIDTxPool, &txMainSet.TxS[i])
 				}
-				log.Info("Primary node ID transaction pool received ID transactions of total: ", len(p.leaderIDTxPool))
+				//log.Info("Primary node ID transaction pool received ID transactions of total: ", len(p.leaderIDTxPool))
 			default:
-				log.Info("Primary node ID transaction set invalid. Continue.")
+				//log.Info("Primary node ID transaction set invalid. Continue.")
 				//do nothing
 			}
 		} else {
@@ -228,17 +228,17 @@ func (p *PBFT) sendTxTrans() {
 			log.Info("_____________________________________")
 		}
 		if len(p.leaderDynaKeyTxPool) <= txsInBlock {
-			log.Info("Available spaces in primary node dynamic key transaction pool, receiving new dynamic key transactions from dynamic key transaction set.")
+			//log.Info("Available spaces in primary node dynamic key transaction pool, receiving new dynamic key transactions from dynamic key transaction set.")
 			// 当动态密钥交易池中，交易数量未达到阈值，则从动态密钥交易管道接收新交易
 			select {
 			case txSideSet := <-p.leaderDynaKeyTxSetChan:
-				log.Info("Primary node dynamic key transaction set valid")
+				//log.Info("Primary node dynamic key transaction set valid")
 				for i, _ := range txSideSet.TxS {
 					p.leaderDynaKeyTxPool = append(p.leaderDynaKeyTxPool, &txSideSet.TxS[i])
 				}
-				log.Info("Primary node dynamic key transaction pool received dynamic key transactions of total: ", len(p.leaderDynaKeyTxPool))
+				//log.Info("Primary node dynamic key transaction pool received dynamic key transactions of total: ", len(p.leaderDynaKeyTxPool))
 			default:
-				log.Info("Primary node dynamic key transaction set invalid. Continue.")
+				//log.Info("Primary node dynamic key transaction set invalid. Continue.")
 				//do nothing
 			}
 		} else {
@@ -644,7 +644,7 @@ func (p *PBFT) handleCommit(content []byte) {
 				bc := new(Blockchain.BlockChain)
 				bc = Blockchain.MainBlockchainObject(p.node.nodeID)
 				block := p.messagePool[c.Digest].ABlock
-				bc.UpdateMainBlock(&block)
+				bc.UpdateMainBlock(&block, p.node.nodeID)
 				fmt.Println("reply ...")
 				log.Info("New ID block generated.")
 				//先不reply
@@ -697,7 +697,7 @@ func (p *PBFT) handleCommit(content []byte) {
 				bc := new(Blockchain.BlockChain)
 				bc = Blockchain.SideBlockchainObject(p.node.nodeID)
 				block := p.messagePool[c.Digest].ABlock
-				bc.UpdateSideBlock(&block)
+				bc.UpdateSideBlock(&block, p.node.nodeID)
 				fmt.Println("reply ...")
 				log.Info("New dynamic key block generated.")
 				//先不reply

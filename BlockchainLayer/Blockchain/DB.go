@@ -23,7 +23,7 @@ func NewDB() *BlockchainDB {
 }
 
 // Put 根据主链或侧链 存入数据
-func (DB *BlockchainDB) Put(k, v []byte, bt string, chainType int) {
+func (DB *BlockchainDB) Put(k, v []byte, bt string, chainType int, nodeID string) {
 	//lock.Lock()
 	////log.Info("上锁")
 	//defer lock.Unlock()
@@ -31,9 +31,9 @@ func (DB *BlockchainDB) Put(k, v []byte, bt string, chainType int) {
 	//0为主链，1为侧链
 	switch chainType {
 	case 0:
-		DBFileName = "NodeMain_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeMain_" + nodeID + ".db"
 	case 1:
-		DBFileName = "NodeSide_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeSide_" + nodeID + ".db"
 
 	}
 	db, err := bolt.Open(fmt.Sprintf("%s%s", dataPath, DBFileName), 0600, &bolt.Options{Timeout: time.Millisecond * 500})
@@ -70,17 +70,18 @@ func (DB *BlockchainDB) Put(k, v []byte, bt string, chainType int) {
 }
 
 // View 查看数据
-func (DB *BlockchainDB) View(k []byte, bt string, chainType int) []byte {
+func (DB *BlockchainDB) View(k []byte, bt string, chainType int, nodeID string) []byte {
 	//lock.Lock()
 	////log.Info("上锁")
 	//defer lock.Unlock()
 	var DBFileName string
 	//0为主链，1为侧链
 	switch chainType {
+	//直接查看主节点的数据库
 	case 0:
-		DBFileName = "NodeMain_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeMain_" + nodeID + ".db"
 	case 1:
-		DBFileName = "NodeSide_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeSide_" + nodeID + ".db"
 
 	}
 	db, err := bolt.Open(fmt.Sprintf("%s%s", dataPath, DBFileName), 0600, &bolt.Options{Timeout: time.Millisecond * 500})
@@ -115,7 +116,7 @@ func (DB *BlockchainDB) View(k []byte, bt string, chainType int) []byte {
 }
 
 // Delete 删除数据
-func (DB *BlockchainDB) Delete(k []byte, bt string, chainType int) bool {
+func (DB *BlockchainDB) Delete(k []byte, bt string, chainType int, nodeID string) bool {
 	//lock.Lock()
 	////log.Info("上锁")
 	//defer lock.Unlock()
@@ -123,9 +124,9 @@ func (DB *BlockchainDB) Delete(k []byte, bt string, chainType int) bool {
 	//0为主链，1为侧链
 	switch chainType {
 	case 0:
-		DBFileName = "NodeMain_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeMain_" + nodeID + ".db"
 	case 1:
-		DBFileName = "NodeSide_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeSide_" + nodeID + ".db"
 
 	}
 	db, err := bolt.Open(fmt.Sprintf("%s%s", dataPath, DBFileName), 0600, nil)
@@ -154,14 +155,14 @@ func (DB *BlockchainDB) Delete(k []byte, bt string, chainType int) bool {
 }
 
 // DeleteBucket 删除仓库
-func (DB *BlockchainDB) DeleteBucket(bt string, chainType int) bool {
+func (DB *BlockchainDB) DeleteBucket(bt string, chainType int, nodeID string) bool {
 	var DBFileName string
 	//0为主链，1为侧链
 	switch chainType {
 	case 0:
-		DBFileName = "NodeMain_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeMain_" + nodeID + ".db"
 	case 1:
-		DBFileName = "NodeSide_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeSide_" + nodeID + ".db"
 
 	}
 	db, err := bolt.Open(fmt.Sprintf("%s%s", dataPath, DBFileName), 0600, nil)
@@ -184,14 +185,14 @@ func (DB *BlockchainDB) DeleteBucket(bt string, chainType int) bool {
 }
 
 // UpdateHash 更新最新hash
-func (DB *BlockchainDB) UpdateHash(key []byte, bt string, chainType int) {
+func (DB *BlockchainDB) UpdateHash(key []byte, bt string, chainType int, nodeID string) {
 	var DBFileName string
 	//0为主链，1为侧链
 	switch chainType {
 	case 0:
-		DBFileName = "NodeMain_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeMain_" + nodeID + ".db"
 	case 1:
-		DBFileName = "NodeSide_" + Constant.ListenPort + ".db"
+		DBFileName = "NodeSide_" + nodeID + ".db"
 
 	}
 	db, err := bolt.Open(fmt.Sprintf("%s%s", dataPath, DBFileName), 0600, nil)
@@ -249,9 +250,9 @@ func IsBlotExist(nodeID string) bool {
 }
 
 // IsBucketExist 判断仓库是否存在
-func IsBucketExist(DB *BlockchainDB, bt string) bool {
+func IsBucketExist(DB *BlockchainDB, bt string, nodeID string) bool {
 	var isBucketExist bool
-	var DBFileName = "Node_" + Constant.ListenPort + ".db"
+	var DBFileName = "Node_" + nodeID + ".db"
 	db, err := bolt.Open(fmt.Sprintf("%s%s", dataPath, DBFileName), 0600, nil)
 	if err != nil {
 		log.Panic(err)

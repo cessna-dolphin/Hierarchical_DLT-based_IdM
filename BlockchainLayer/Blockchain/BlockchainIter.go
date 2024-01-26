@@ -24,7 +24,7 @@ func (blockChain *BlockChain) Iterator() *BlockChainIterator {
 // MainNext 实现迭代函数next,获取到每一个区块，主链用
 func (bcit *BlockChainIterator) MainNext() *Utils.Block {
 	var block *Utils.Block
-	currentBlockBytes := bcit.DB.View(bcit.CurrentHash, Constant.MainBlockTableName, 0)
+	currentBlockBytes := bcit.DB.View(bcit.CurrentHash, Constant.MainBlockTableName, 0, "1008")
 	block = Utils.DeserializeBlock(currentBlockBytes)
 	bcit.CurrentHash = block.Header.PreviousHash
 	return block
@@ -33,7 +33,7 @@ func (bcit *BlockChainIterator) MainNext() *Utils.Block {
 // SideNext 实现迭代函数next,获取到每一个区块，侧链用
 func (bcit *BlockChainIterator) SideNext() *Utils.Block {
 	var block *Utils.Block
-	currentBlockBytes := bcit.DB.View(bcit.CurrentHash, Constant.SideBlockTableName, 1)
+	currentBlockBytes := bcit.DB.View(bcit.CurrentHash, Constant.SideBlockTableName, 1, "1008")
 	block = Utils.DeserializeBlock(currentBlockBytes)
 	bcit.CurrentHash = block.Header.PreviousHash
 	return block

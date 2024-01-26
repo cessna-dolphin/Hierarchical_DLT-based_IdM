@@ -126,42 +126,42 @@ func CreateBlockChainWithGenesisBlock() {
 }
 
 // 根据交易生成对应的新区块
-func (blockChain *BlockChain) NewBlockFromTx(txs []Utils.Tx) {
+func (blockChain *BlockChain) NewBlockFromTx(txs []Utils.Tx, nodeID string) {
 	switch txs[0].Data.Category {
 	//根据交易种类决定更新主链或侧链
 	case "ID":
-		hash := blockChain.DB.View([]byte("1"), Constant.MainBlockTableName, 0)
-		blockBytes := blockChain.DB.View(hash, Constant.MainBlockTableName, 0)
+		hash := blockChain.DB.View([]byte("1"), Constant.MainBlockTableName, 0, "1008")
+		blockBytes := blockChain.DB.View(hash, Constant.MainBlockTableName, 0, "1008")
 		preBlock := Utils.DeserializeBlock(blockBytes)
 		block := Utils.NewBlock(preBlock.Header.Height+1, preBlock.Header.Hash, txs)
-		blockChain.UpdateMainBlock(block)
+		blockChain.UpdateMainBlock(block, nodeID)
 	case "DynaKey":
-		hash := blockChain.DB.View([]byte("1"), Constant.SideBlockTableName, 1)
-		blockBytes := blockChain.DB.View(hash, Constant.SideBlockTableName, 1)
+		hash := blockChain.DB.View([]byte("1"), Constant.SideBlockTableName, 1, "1008")
+		blockBytes := blockChain.DB.View(hash, Constant.SideBlockTableName, 1, "1008")
 		preBlock := Utils.DeserializeBlock(blockBytes)
 		block := Utils.NewBlock(preBlock.Header.Height+1, preBlock.Header.Hash, txs)
-		blockChain.UpdateSideBlock(block)
+		blockChain.UpdateSideBlock(block, nodeID)
 	default:
 		panic("No such transaction category.")
 	}
 }
 
 // UpdateMainBlock 更新新区块到主链数据库
-func (blockChain *BlockChain) UpdateMainBlock(block *Utils.Block) {
+func (blockChain *BlockChain) UpdateMainBlock(block *Utils.Block, nodeID string) {
 	//更新区块
-	blockChain.DB.Put(block.Header.Hash, block.Serialize(), Constant.MainBlockTableName, 0)
+	blockChain.DB.Put(block.Header.Hash, block.Serialize(), Constant.MainBlockTableName, 0, nodeID)
 	//更新tip
-	blockChain.DB.Put([]byte("1"), block.Header.Hash, Constant.MainBlockTableName, 0)
+	blockChain.DB.Put([]byte("1"), block.Header.Hash, Constant.MainBlockTableName, 0, nodeID)
 	blockChain.Tip = block.Header.Hash
 	Constant.CurMainHeight = block.Header.Height
 }
 
 // UpdateSideBlock 更新新区块到侧链数据库
-func (blockChain *BlockChain) UpdateSideBlock(block *Utils.Block) {
+func (blockChain *BlockChain) UpdateSideBlock(block *Utils.Block, nodeID string) {
 	//更新区块
-	blockChain.DB.Put(block.Header.Hash, block.Serialize(), Constant.SideBlockTableName, 1)
+	blockChain.DB.Put(block.Header.Hash, block.Serialize(), Constant.SideBlockTableName, 1, nodeID)
 	//更新tip
-	blockChain.DB.Put([]byte("1"), block.Header.Hash, Constant.SideBlockTableName, 1)
+	blockChain.DB.Put([]byte("1"), block.Header.Hash, Constant.SideBlockTableName, 1, nodeID)
 	blockChain.Tip = block.Header.Hash
 	Constant.CurSideHeight = block.Header.Height
 }
@@ -169,7 +169,7 @@ func (blockChain *BlockChain) UpdateSideBlock(block *Utils.Block) {
 // MainBlockchainObject 从主链上获取一个blockchain对象
 func MainBlockchainObject(nodeId string) *BlockChain {
 	//获取DB
-	var DBFileName = "NodeMain_" + Constant.ListenPort + ".db"
+	var DBFileName = "NodeMain_" + nodeId + ".db"
 	db, err := bolt.Open(fmt.Sprintf("%s%s", Constant.DataPath, DBFileName), 0600, &bolt.Options{Timeout: time.Millisecond * 500})
 	if err != nil {
 		log.Panic("open the db [%s] failed! %v\n", Constant.DbMainName, err)
@@ -197,7 +197,7 @@ func MainBlockchainObject(nodeId string) *BlockChain {
 // SideBlockchainObject 从侧链上获取一个blockchain对象
 func SideBlockchainObject(nodeId string) *BlockChain {
 	//获取DB
-	var DBFileName = "NodeSide_" + Constant.ListenPort + ".db"
+	var DBFileName = "NodeSide_" + nodeId + ".db"
 	db, err := bolt.Open(fmt.Sprintf("%s%s", Constant.DataPath, DBFileName), 0600, &bolt.Options{Timeout: time.Millisecond * 500})
 	if err != nil {
 		log.Panic("open the db [%s] failed! %v\n", Constant.DbSideName, err)
@@ -261,11 +261,11 @@ func (blockChain *BlockChain) GetGenesisBlockSide() *Utils.Block {
 // 根据高度获取区块
 func GetBlockByHeight(nodeID string, height int) *Utils.Block {
 	MainBlockFromDB := MainBlockchainObject(nodeID) //从主链上获取区块链对象
-	ThisMainBlockByte := MainBlockFromDB.DB.View(MainBlockFromDB.Tip, Constant.MainBlockTableName, 0)
+	ThisMainBlockByte := MainBlockFromDB.DB.View(MainBlockFromDB.Tip, Constant.MainBlockTableName, 0, "1008")
 	ThisMainBlock := Utils.DeserializeBlock(ThisMainBlockByte)
 	for int(ThisMainBlock.Header.Height) != height {
 		//若当前区块高度与指定高度不符，遍历前一区块
-		ThisMainBlock = Utils.DeserializeBlock(MainBlockFromDB.DB.View(ThisMainBlock.Header.PreviousHash, Constant.MainBlockTableName, 0))
+		ThisMainBlock = Utils.DeserializeBlock(MainBlockFromDB.DB.View(ThisMainBlock.Header.PreviousHash, Constant.MainBlockTableName, 0, "1008"))
 	}
 	return ThisMainBlock
 }
@@ -284,9 +284,9 @@ func NewDynaKeyFromExistID(pos map[int]int) string {
 	//获取两个随机交易编号
 	num1, num2 := rand.Intn(len(mBlock1.Data.Data)), rand.Intn(len(mBlock2.Data.Data))
 	log.Info("Get random ID transaction number:", num1, num2)
-	var randomID1, randomID2 Utils.Tx
-	randomID1 = mBlock1.Data.Data[num1]
-	randomID2 = mBlock2.Data.Data[num2]
+	var randomID1, randomID2 *Utils.Tx
+	randomID1 = &mBlock1.Data.Data[num1]
+	randomID2 = &mBlock2.Data.Data[num2]
 	log.Info("Selected random ID 1:", randomID1.Data.Content)
 	log.Info("Selected random ID 2:", randomID2.Data.Content)
 	//TODO 将动态密钥的格式定义为：两个区块的高度+两个交易的编号+两个随机ID的前8位

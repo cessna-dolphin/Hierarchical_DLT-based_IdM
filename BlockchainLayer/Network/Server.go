@@ -1,6 +1,7 @@
 package Network
 
 import (
+	"Hierarchical_IdM/ApplicationLayer/Sim"
 	"Hierarchical_IdM/BlockchainLayer/Blockchain"
 	"Hierarchical_IdM/BlockchainLayer/Constant"
 	"Hierarchical_IdM/BlockchainLayer/Utils"
@@ -49,6 +50,20 @@ func Server() {
 		Blockchain.CreateBlockChainWithGenesisBlock()
 		log.Println("Both blockchain initializing with genesis block completed.")
 		Utils.CopyGenesisBlock(nodeID)
+
+		//todo test
+		//第一行输入两个整数，空格隔开，表示主链区块高度
+		//第二行输入两个整数，空格隔开，表示对应的两个ID交易序号
+		for {
+			var h, tx int
+			fmt.Scanln(&h, &tx)
+			mappings := Sim.ViewMapping(h, tx)
+			fmt.Println("Picked main height:" + strconv.Itoa(h) + " and tx order:" + strconv.Itoa(tx) + " for test.")
+			for k, v := range mappings {
+				fmt.Println("mapping side height:" + strconv.Itoa(k) + " on side tx on number: " + strconv.Itoa(v))
+			}
+		}
+
 	} else {
 		//生成区块链节点
 		p := NewIdM(nodeID, fmt.Sprintf("127.0.0.1:%s", nodeID))
