@@ -175,7 +175,7 @@ func MainBlockchainObject(nodeId string) *BlockChain {
 		log.Panic("open the db [%s] failed! %v\n", Constant.DbMainName, err)
 	}
 	defer db.Close()
-	//获取Tip
+	//获取Tip Tip即最新区块哈希值
 	var tip []byte
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(Constant.MainBlockTableName))
@@ -284,23 +284,23 @@ func NewDynaKeyFromExistID(pos map[int]int) string {
 	//获取两个随机交易编号
 	num1, num2 := rand.Intn(len(mBlock1.Data.Data)), rand.Intn(len(mBlock2.Data.Data))
 	log.Info("Get random ID transaction number:", num1, num2)
-	var randomID1, randomID2 *Utils.Tx
-	randomID1 = &mBlock1.Data.Data[num1]
-	randomID2 = &mBlock2.Data.Data[num2]
-	log.Info("Selected random ID 1:", randomID1.Data.Content)
-	log.Info("Selected random ID 2:", randomID2.Data.Content)
+	m1Data, m2Data := mBlock1.Data.Data, mBlock2.Data.Data
 	//TODO 将动态密钥的格式定义为：两个区块的高度+两个交易的编号+两个随机ID的前8位
 	//随机选择的两项都已经有映射，将不再生成新的动态密钥
-	if randomID1.Mapping != nil && randomID2.Mapping != nil {
+	if m1Data[num1].Mapping != nil && m2Data[num2].Mapping != nil {
 		return "Dynamic key existed"
 	}
-	DynamicKey := "Height1_" + strconv.Itoa(b1) + "Height_2" + strconv.Itoa(b2) + "tx1_" + strconv.Itoa(num1) + "tx2" + strconv.Itoa(num2) + randomID1.Data.Content[:8] + randomID2.Data.Content[:8]
+	DynamicKey := "Height1_" + strconv.Itoa(b1) + "Height_2" + strconv.Itoa(b2) + "tx1_" + strconv.Itoa(num1) + "tx2" + strconv.Itoa(num2) + m1Data[num1].Data.Content[:8] + m2Data[num2].Data.Content[:8]
 	log.Info("The dynamic key is: ", DynamicKey)
 
 	//更改所选择的两个ID交易的映射关系
 	//TODO 如何确定当前的Dynamic Key将会作为第几侧链区块的第几交易提交？
 
-	randomID1.Mapping, randomID2.Mapping = pos, pos //将规定的交易位置标志位存入两个选定的ID的映射位
+	//m1Data[num1].Mapping, m2Data[num2].Mapping = pos, pos                                                    //将规定的交易位置标志位存入两个选定的ID的映射位
+	MainBlockFromDB := MainBlockchainObject("1008") //从主链上获取区块链对象
+	mBlock1.Data.Data[num1].Mapping, mBlock2.Data.Data[num2].Mapping = pos, pos
+	MainBlockFromDB.DB.Put(mBlock1.Header.Hash, mBlock1.Serialize(), Constant.MainBlockTableName, 0, "1008") //将更新过的交易重新持久化到原始区块中
+	MainBlockFromDB.DB.Put(mBlock2.Header.Hash, mBlock2.Serialize(), Constant.MainBlockTableName, 0, "1008") //将更新过的交易重新持久化到原始区块中
 	return DynamicKey
 }
 

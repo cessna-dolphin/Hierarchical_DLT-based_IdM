@@ -52,8 +52,7 @@ func Server() {
 		Utils.CopyGenesisBlock(nodeID)
 
 		//todo test
-		//第一行输入两个整数，空格隔开，表示主链区块高度
-		//第二行输入两个整数，空格隔开，表示对应的两个ID交易序号
+		//输入连个整数，空格隔开。首个整数表示区块高度，第二个整数表示区块中交易序号
 		for {
 			var h, tx int
 			fmt.Scanln(&h, &tx)
